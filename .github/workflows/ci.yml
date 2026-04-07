@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
+  # 1. Етап перевірки коду (Linter)
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -14,6 +15,7 @@ jobs:
           npm install -g htmlhint
           htmlhint "*.html" || true
 
+  # 2. Етап збірки та завантаження образу в GitHub Packages
   build-and-push:
     needs: lint
     runs-on: ubuntu-latest
@@ -30,10 +32,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         run: |
+          # Перетворюємо ім'я репозиторію в нижній регістр для Docker
           IMAGE_NAME_LOWER=$(echo "ghcr.io/${{ github.actor }}/software_engineering" | tr '[:upper:]' '[:lower:]')
           docker build -t $IMAGE_NAME_LOWER:latest .
           docker push $IMAGE_NAME_LOWER:latest
 
+  # 3. Етап тестування продуктивності
   performance-tests:
     needs: build-and-push
     runs-on: ubuntu-latest
@@ -47,24 +51,28 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Container
+      - name: Run Container in Host Network
         run: |
           IMAGE_NAME_LOWER=$(echo "ghcr.io/${{ github.actor }}/software_engineering" | tr '[:upper:]' '[:lower:]')
           docker pull $IMAGE_NAME_LOWER:latest
-          docker run -d -p 8081:80 $IMAGE_NAME_LOWER:latest
-          sleep 5
+          # Запускаємо в мережі host, щоб порт 80 був доступний локально в GitHub Runner
+          docker run -d --network host $IMAGE_NAME_LOWER:latest
+          sleep 10 # Даємо час Nginx запуститися
 
-      - name: Run All k6 Tests
+      - name: Run Smoke Test
         uses: grafana/k6-action@v0.3.1
         with:
           filename: tests/smoke_test.js
-      
+          flags: --network host
+
       - name: Run Load Test
         uses: grafana/k6-action@v0.3.1
         with:
           filename: tests/load_test.js
+          flags: --network host
 
       - name: Run Stress Test
         uses: grafana/k6-action@v0.3.1
         with:
           filename: tests/stress_test.js
+          flags: --network host
