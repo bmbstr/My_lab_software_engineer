@@ -3,9 +3,9 @@ import { sleep } from 'k6';
 
 export const options = {
     stages: [
-        { duration: '20s', target: 10 }, // плавний розгін
-        { duration: '40s', target: 30 }, // пік
-        { duration: '20s', target: 0 },  // спад
+        { duration: '20s', target: 10 },
+        { duration: '40s', target: 30 },
+        { duration: '20s', target: 0 },
     ],
 };
 
