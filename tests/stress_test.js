@@ -10,6 +10,6 @@ export const options = {
 };
 
 export default function () {
-    http.get('http://localhost:80');
+    http.get('http://localhost:8081');
     sleep(0.5);
 }
