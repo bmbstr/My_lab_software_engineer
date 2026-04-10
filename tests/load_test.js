@@ -7,7 +7,7 @@ export const options = {
 };
 
 export default function () {
-    const res = http.get('http://localhost:8081');
+    const res = http.get('http://localhost:80');
     check(res, {
         'homepage loaded': (r) => r.body.includes('Dovzhenko'), // Перевірка, чи є моє прізвище на сторінці
     });
